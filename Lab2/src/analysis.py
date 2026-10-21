@@ -48,16 +48,19 @@ def test_metrics(y: np.ndarray, scores: np.ndarray, best_t: float) -> dict:
 def error_table(y: np.ndarray, scores: np.ndarray, amounts: np.ndarray,
                 row_ids: np.ndarray, best_t: float, top_n: int = 5) -> pd.DataFrame:
     pred = scores >= best_t
+    order = np.argsort(row_ids)
+    y_s, scores_s, row_ids_s, amounts_s, pred_s = y[order], scores[order], row_ids[order], amounts[order], pred[order]
+
     rows = []
-    for idx in np.flatnonzero((y == 0) & pred)[:top_n]:
-        rows.append({"CSV_Row": int(row_ids[idx]), "Type": "FP", "Label": 0,
-                     "Score": round(float(scores[idx]), 6),
-                     "Dist_to_t*": round(float(scores[idx] - best_t), 6),
-                     "Amount": float(amounts[idx])})
-    for idx in np.flatnonzero((y == 1) & ~pred)[:top_n]:
-        rows.append({"CSV_Row": int(row_ids[idx]), "Type": "FN", "Label": 1,
-                     "Score": round(float(scores[idx]), 6),
-                     "Dist_to_t*": round(float(scores[idx] - best_t), 6),
-                     "Amount": float(amounts[idx])})
+    for idx in np.flatnonzero((y_s == 0) & pred_s)[:top_n]:
+        rows.append({"CSV_Row": int(row_ids_s[idx]), "Type": "FP", "Label": 0,
+                     "Score": round(float(scores_s[idx]), 4),
+                     "Dist_to_t*": round(float(scores_s[idx] - best_t), 4),
+                     "Amount": float(amounts_s[idx])})
+    for idx in np.flatnonzero((y_s == 1) & ~pred_s)[:top_n]:
+        rows.append({"CSV_Row": int(row_ids_s[idx]), "Type": "FN", "Label": 1,
+                     "Score": round(float(scores_s[idx]), 4),
+                     "Dist_to_t*": round(float(scores_s[idx] - best_t), 4),
+                     "Amount": float(amounts_s[idx])})
     df = pd.DataFrame(rows)
     return df.sort_values("CSV_Row").reset_index(drop=True) if not df.empty else df
